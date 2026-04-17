@@ -1,17 +1,18 @@
-# main.py
-
 import telebot
+import os
 
-# Reemplaza 'AQUI_TU_TOKEN' por el token de tu bot de Telegram
-TOKEN = 'AQUI_TU_TOKEN'
+# 1. Obtenemos el token desde las variables de entorno de Render
+# Esto es mucho más seguro que escribir el token directamente aquí
+TOKEN = os.environ.get('TOKEN')
 
+# Creamos la instancia del bot
 bot = telebot.TeleBot(TOKEN)
 
 def obtener_primera_linea(texto):
     """Devuelve la primera línea no vacía del texto recibido."""
     if not texto:
         return ""
-    # Separa por saltos de línea, quita espacios y devuelve la primera línea no vacía
+    # Separa por saltos de línea y toma la primera parte con contenido
     for linea in texto.splitlines():
         linea = linea.strip()
         if linea:
@@ -20,14 +21,18 @@ def obtener_primera_linea(texto):
 
 @bot.message_handler(content_types=['text', 'photo', 'video', 'document'])
 def responder_con_primera_linea(message):
+    # Extraemos el texto (si es mensaje normal) o la descripción (si es archivo)
     texto = message.text or message.caption
+    
+    # Obtenemos la línea limpia usando la función
     primera_linea = obtener_primera_linea(texto)
+    
     if primera_linea:
+        # Respondemos al usuario con la línea limpia
         bot.reply_to(message, primera_linea)
-    else:
-        # Si no hay texto ni caption, no devuelve nada
-        pass
 
 if __name__ == '__main__':
-    # Importante para que funcione correctamente en entornos tipo Render/server
+    print("Bot encendido y escuchando...")
+    # infinity_polling mantiene el bot activo esperando mensajes
     bot.infinity_polling(skip_pending=True)
+    
