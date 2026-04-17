@@ -1,5 +1,6 @@
 import telebot
 import os
+import time  # Importamos la librería de tiempo para hacer la pausa
 
 TOKEN = os.environ.get('TOKEN')
 bot = telebot.TeleBot(TOKEN)
@@ -11,22 +12,19 @@ def obtener_primera_linea(texto):
         if linea: return linea
     return "Sin título"
 
-@bot.message_handler(content_types=['video'])
-def procesar_video(message):
-    # Intentamos sacar el caption del reenvío
-    texto = message.caption
+@bot.message_handler(content_types=['video', 'document'])
+def procesar_mensajes(message):
+    # La pausa de seguridad: el bot espera 1 segundo antes de empezar a procesar
+    # Esto asegura que si envías 20, los procese con calma, uno tras otro.
+    time.sleep(1) 
     
-    # Obtenemos la primera línea
+    texto = message.caption
     nueva_descripcion = obtener_primera_linea(texto)
     
-    # Reenviamos el vídeo a ti mismo con la nueva descripción
-    # message.chat.id es tu chat, message.video.file_id es el vídeo
-    bot.send_video(
-        chat_id=message.chat.id, 
-        video=message.video.file_id, 
-        caption=nueva_descripcion
-    )
+    if message.content_type == 'video':
+        bot.send_video(message.chat.id, message.video.file_id, caption=nueva_descripcion)
+    elif message.content_type == 'document':
+        bot.send_document(message.chat.id, message.document.file_id, caption=nueva_descripcion)
 
 if __name__ == '__main__':
     bot.infinity_polling(skip_pending=True)
-    
