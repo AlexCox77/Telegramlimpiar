@@ -1,6 +1,23 @@
 import telebot
 import os
-import time  # Importamos la librería de tiempo para hacer la pausa
+import time
+from flask import Flask
+from threading import Thread
+
+# --- Esto es lo que evita el error de la imagen ---
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot en línea"
+
+def run():
+    app.run(host='0.0.0.0', port=7860)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+# --------------------------------------------------
 
 TOKEN = os.environ.get('TOKEN')
 bot = telebot.TeleBot(TOKEN)
@@ -14,10 +31,7 @@ def obtener_primera_linea(texto):
 
 @bot.message_handler(content_types=['video', 'document'])
 def procesar_mensajes(message):
-    # La pausa de seguridad: el bot espera 1 segundo antes de empezar a procesar
-    # Esto asegura que si envías 20, los procese con calma, uno tras otro.
     time.sleep(1) 
-    
     texto = message.caption
     nueva_descripcion = obtener_primera_linea(texto)
     
@@ -27,4 +41,6 @@ def procesar_mensajes(message):
         bot.send_document(message.chat.id, message.document.file_id, caption=nueva_descripcion)
 
 if __name__ == '__main__':
+    keep_alive() # Arranca el servidor web para Hugging Face
     bot.infinity_polling(skip_pending=True)
+    
